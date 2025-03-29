@@ -45,3 +45,9 @@ validateId id
   | not (isAlpha (head id))        = Invalid ["First character of Lecturer ID must be alphabetic"]
   | not (all isDigit (tail id))    = Invalid ["Last 3 characters of Lecturer ID must be digits"]
   | otherwise                      = Valid id
+
+validateName :: String -> ValidationResult String
+validateName name
+  | null name                      = Invalid ["Name is empty"]
+  | length name > 15               = Invalid ["Name must be 15 characters or less"]
+  | otherwise                      = Valid name
