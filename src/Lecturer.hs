@@ -63,3 +63,9 @@ validateDepartmentId :: String -> ValidationResult String
 validateDepartmentId departmentId
   | null departmentId              = Invalid ["Department ID is empty"]
   | otherwise                      = Valid departmentId
+
+validateAvailableHours :: Int -> ValidationResult Int
+validateAvailableHours hours
+  | hours < 0                      = Invalid ["Available hours cannot be negative"]
+  | hours > 22                     = Invalid ["Available hours cannot exceed 22"]
+  | otherwise                      = Valid hours
