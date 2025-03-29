@@ -41,5 +41,7 @@ instance ToNamedRecord  Lecturer
 
 validateId :: String -> ValidationResult String
 validateId id
-  | length id /= 4           = Invalid ["Id must be 4 characters"]
-  | otherwise                = Valid id
+  | length id /= 4                 = Invalid ["Lecturer ID must be 4 characters"]
+  | not (isAlpha (head id))        = Invalid ["First character of Lecturer ID must be alphabetic"]
+  | not (all isDigit (tail id))    = Invalid ["Last 3 characters of Lecturer ID must be digits"]
+  | otherwise                      = Valid id
