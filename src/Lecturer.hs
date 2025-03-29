@@ -58,3 +58,8 @@ validateEmail email
   | '@' `notElem` email            = Invalid ["Email must contain '@'"]
   | '.' `notElem` dropWhile (/= '@') email = Invalid ["Email must contain '.' after '@'"]
   | otherwise                      = Valid email
+
+validateDepartmentId :: String -> ValidationResult String
+validateDepartmentId departmentId
+  | null departmentId              = Invalid ["Department ID is empty"]
+  | otherwise                      = Valid departmentId
