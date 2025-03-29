@@ -51,3 +51,10 @@ validateName name
   | null name                      = Invalid ["Name is empty"]
   | length name > 15               = Invalid ["Name must be 15 characters or less"]
   | otherwise                      = Valid name
+
+validateEmail :: String -> ValidationResult String
+validateEmail email
+  | null email                     = Invalid ["Email is empty"]
+  | '@' `notElem` email            = Invalid ["Email must contain '@'"]
+  | '.' `notElem` dropWhile (/= '@') email = Invalid ["Email must contain '.' after '@'"]
+  | otherwise                      = Valid email
