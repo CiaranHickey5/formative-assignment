@@ -69,3 +69,22 @@ validateAvailableHours hours
   | hours < 0                      = Invalid ["Available hours cannot be negative"]
   | hours > 22                     = Invalid ["Available hours cannot exceed 22"]
   | otherwise                      = Valid hours
+
+validateLecturer :: Lecturer -> ValidationResult Lecturer
+validateLecturer lecturer =
+  case (validateId (lecturerID lecturer), 
+        validateName (name lecturer),
+        validateEmail (email lecturer),
+        validateDepartmentId (departmentID lecturer),
+        validateAvailableHours (availableHours lecturer)) of
+    (Valid _, Valid _, Valid _, Valid _, Valid _) -> Valid lecturer
+    (idResult, nameResult, emailResult, deptResult, hoursResult) ->
+      let errors = concat [getErrors idResult "ID",
+                           getErrors nameResult "Name",
+                           getErrors emailResult "Email",
+                           getErrors deptResult "Department",
+                           getErrors hoursResult "Available hours"]
+      in Invalid errors
+  where
+    getErrors (Invalid errs) prefix = map (\err -> prefix ++ ": " ++ err) errs
+    getErrors (Valid _) _ = []
