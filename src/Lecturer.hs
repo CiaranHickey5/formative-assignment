@@ -4,7 +4,16 @@
  
 
 
-module Lecturer  where
+module Lecturer
+  ( Lecturer(..)
+  , validateId
+  , validateName
+  , validateEmail
+  , validateDepartmentId
+  , validateAvailableHours
+  , validateLecturer
+  , isValidLecturer
+  ) where
 import Types (ValidationResult(..))
 import GHC.Generics (Generic)
 import Data.Csv (FromNamedRecord(..), ToNamedRecord, (.:))
