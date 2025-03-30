@@ -31,6 +31,13 @@ main = do
         then putStrLn "No invalid lecturers found."
         else mapM_ printInvalidLecturer invalidLecturers
       putStrLn $ "Total invalid lecturers: " ++ show (length invalidLecturers)
+
+      -- Write valid lecturers to CSV
+      writeValidLecturers validLecturers
+      
+      -- Check timetable rule
+      putStrLn "\n=== Timetable Rule Check ==="
+      putStrLn $ checkLecturerAvailability validLecturers
   
 readLecturers :: FilePath -> IO (Either String [Lecturer])
 readLecturers filePath = do

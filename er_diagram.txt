@@ -1,0 +1,49 @@
+TIMETABLING SYSTEM ER DIAGRAM
+-----------------------------
+
+ENTITIES AND THEIR ATTRIBUTES:
+
+COURSE
+- courseID (PK)
+- name
+- credits
+- departmentID (FK)
+
+ROOM
+- roomID (PK)
+- name
+- capacity
+- buildingID (FK)
+
+LECTURER
+- lecturerID (PK)
+- name
+- email
+- departmentID (FK)
+- availableHours
+
+STUDENT
+- studentID (PK)
+- name
+- email
+- programID (FK)
+
+STUDENT GROUP
+- groupID (PK)
+- name
+- programYear
+- size
+
+TIMETABLE
+- entryID (PK)
+- courseID (FK)
+- roomID (FK)
+- lecturerID (FK)
+- timeSlot
+- studentGroup (FK)
+
+RELATIONSHIPS:
+- LECTURER teaches in TIMETABLE (1:N)
+- COURSE is scheduled in TIMETABLE (1:N)
+- ROOM is used in TIMETABLE (1:N)
+- STUDENT attends TIMETABLE (M:N)
