@@ -52,3 +52,9 @@ printInvalidLecturer (lecturer, errors) = do
   putStrLn "Validation errors:"
   mapM_ (\err -> putStrLn $ "  - " ++ err) errors
   putStrLn ""
+
+writeValidLecturers :: [Lecturer] -> IO ()
+writeValidLecturers lecturers = do
+  let csv = encodeDefaultOrderedByName lecturers
+  BL.writeFile "output/valid_lecturers.csv" csv
+  putStrLn $ "Wrote " ++ show (length lecturers) ++ " valid lecturers to output/valid_lecturers.csv"
