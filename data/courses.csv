@@ -1,0 +1,4 @@
+courseID,name,credits,departmentID
+C101,Physics,5,Science
+C102,Web App Development,5,CompSci
+C103,Functional Programming,5,CompMaths
