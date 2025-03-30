@@ -2,6 +2,7 @@ import Lecturer
 import Data.Csv (decodeByName, Header)
 import qualified Data.ByteString.Lazy as BL
 import qualified Data.Vector as V (Vector, toList)
+import qualified Data.Csv as Csv (encodeDefaultOrderedByName)
 
 main :: IO ()
 main = do
