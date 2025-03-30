@@ -3,20 +3,34 @@ import Data.Csv (decodeByName, Header)
 import qualified Data.ByteString.Lazy as BL
 import qualified Data.Vector as V (Vector, toList)
 
-
 main :: IO ()
 main = do
   result <- readLecturers "data/lecturers.csv"
   case result of
     Left err  -> putStrLn $ "Error: " ++ err
     Right lecturers -> do  
+      -- Print all lecturers
+      putStrLn "=== All Lecturers ==="
       mapM_ print lecturers
-      print $ length lecturers
-      print $ validateId $ lecturerID $ head lecturers
-      -- use this to test  functions
+      putStrLn $ "Total lecturers: " ++ show (length lecturers)
+      
+      -- Separate valid and invalid lecturers
+      let (validLecturers, invalidLecturers) = separateValidation lecturers
+      
+      -- Print valid lecturers
+      putStrLn "\n=== Valid Lecturers ==="
+      if null validLecturers
+        then putStrLn "No valid lecturers found."
+        else mapM_ print validLecturers
+      putStrLn $ "Total valid lecturers: " ++ show (length validLecturers)
+      
+      -- Print invalid lecturers with reasons
+      putStrLn "\n=== Invalid Lecturers ==="
+      if null invalidLecturers
+        then putStrLn "No invalid lecturers found."
+        else mapM_ printInvalidLecturer invalidLecturers
+      putStrLn $ "Total invalid lecturers: " ++ show (length invalidLecturers)
   
-  
-
 readLecturers :: FilePath -> IO (Either String [Lecturer])
 readLecturers filePath = do
   csvData <- BL.readFile filePath
