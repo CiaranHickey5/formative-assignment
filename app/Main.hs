@@ -23,3 +23,18 @@ readLecturers filePath = do
   case decodeByName csvData of
     Left err -> return $ Left err
     Right (_, result) -> return $ Right (V.toList result)
+
+separateValidation :: [Lecturer] -> ([Lecturer], [(Lecturer, [String])])
+separateValidation = foldr categorize ([], [])
+  where
+    categorize lecturer (valid, invalid) = 
+      case validateLecturer lecturer of
+        Valid _ -> (lecturer : valid, invalid)
+        Invalid errors -> (valid, (lecturer, errors) : invalid)
+
+printInvalidLecturer :: (Lecturer, [String]) -> IO ()
+printInvalidLecturer (lecturer, errors) = do
+  putStrLn $ "Lecturer: " ++ show lecturer
+  putStrLn "Validation errors:"
+  mapM_ (\err -> putStrLn $ "  - " ++ err) errors
+  putStrLn ""
