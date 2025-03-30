@@ -88,3 +88,9 @@ validateLecturer lecturer =
   where
     getErrors (Invalid errs) prefix = map (\err -> prefix ++ ": " ++ err) errs
     getErrors (Valid _) _ = []
+
+isValidLecturer :: Lecturer -> Bool
+isValidLecturer lecturer = 
+  case validateLecturer lecturer of
+    Valid _ -> True
+    Invalid _ -> False
