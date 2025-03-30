@@ -59,3 +59,9 @@ writeValidLecturers lecturers = do
   let csv = encodeDefaultOrderedByName lecturers
   BL.writeFile "output/valid_lecturers.csv" csv
   putStrLn $ "Wrote " ++ show (length lecturers) ++ " valid lecturers to output/valid_lecturers.csv"
+
+checkLecturerAvailability :: [Lecturer] -> String
+checkLecturerAvailability lecturers = 
+  "Checking lecturer availability for " ++ show (length lecturers) ++ " lecturers.\n" ++
+  "In a full implementation, this would verify if lecturers are scheduled for\n" ++
+  "more hours than their availability allows."
