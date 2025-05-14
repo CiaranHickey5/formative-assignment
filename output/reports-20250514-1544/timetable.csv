@@ -1,0 +1,5 @@
+entryID,courseID,roomID,lecturerID,dayOfWeek,startTime,endTime,studentGroup
+TT001,C103,TL158,I002,Monday,09:00,11:00,G104
+TT002,C105,TL101,I001,Monday,13:00,15:00,G102
+TT003,C104,F04,I003,Tuesday,10:00,12:00,G101
+TT004,C106,TL158,I003,Wednesday,14:00,16:00,G101

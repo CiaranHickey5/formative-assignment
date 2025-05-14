@@ -1,0 +1,5 @@
+roomID,name,capacity,buildingID
+TL101,Lab A,30,B1
+F04,Lecture 4,120,B2
+TL158,Lab B,40,B1
+IT202,Lab C,20,B3
