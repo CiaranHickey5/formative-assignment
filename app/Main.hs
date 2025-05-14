@@ -1,6 +1,7 @@
 import Lecturer
 import Course
 import Room
+import Student
 import Data.Csv (decodeByName, Header)
 import qualified Data.ByteString.Lazy as BL
 import qualified Data.Vector as V (Vector, toList)
@@ -60,6 +61,15 @@ main = do
           putStrLn "=== All Rooms ==="
           mapM_ print rooms
           putStrLn $ "Total rooms: " ++ show (length rooms)
+
+      putStrLn "\n=== Reading Students ==="
+      studentResult <- readStudents "data/students.csv"
+      case studentResult of
+        Left err  -> putStrLn $ "Error: " ++ err
+        Right students -> do
+          putStrLn "=== All Students ==="
+          mapM_ print students
+          putStrLn $ "Total students: " ++ show (length students)
   
 readLecturers :: FilePath -> IO (Either String [Lecturer])
 readLecturers filePath = do
@@ -104,6 +114,13 @@ readCourses filePath = do
 
 readRooms :: FilePath -> IO (Either String [Room])
 readRooms filePath = do
+  csvData <- BL.readFile filePath
+  case decodeByName csvData of
+    Left err -> return $ Left err
+    Right (_, result) -> return $ Right (V.toList result)
+
+readStudents :: FilePath -> IO (Either String [Student])
+readStudents filePath = do
   csvData <- BL.readFile filePath
   case decodeByName csvData of
     Left err -> return $ Left err
