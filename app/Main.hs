@@ -3,6 +3,7 @@ import Course
 import Room
 import Student
 import StudentGroup
+import Timetable
 import Data.Csv (decodeByName, Header)
 import qualified Data.ByteString.Lazy as BL
 import qualified Data.Vector as V (Vector, toList)
@@ -80,6 +81,15 @@ main = do
           putStrLn "=== All Student Groups ==="
           mapM_ print groups
           putStrLn $ "Total student groups: " ++ show (length groups)
+      
+      putStrLn "\n=== Reading Timetable ==="
+      timetableResult <- readTimetable "data/timetable.csv"
+      case timetableResult of
+        Left err  -> putStrLn $ "Error: " ++ err
+        Right entries -> do
+          putStrLn "=== All Timetable Entries ==="
+          mapM_ print entries
+          putStrLn $ "Total timetable entries: " ++ show (length entries)
   
 readLecturers :: FilePath -> IO (Either String [Lecturer])
 readLecturers filePath = do
@@ -138,6 +148,13 @@ readStudents filePath = do
 
 readStudentGroups :: FilePath -> IO (Either String [StudentGroup])
 readStudentGroups filePath = do
+  csvData <- BL.readFile filePath
+  case decodeByName csvData of
+    Left err -> return $ Left err
+    Right (_, result) -> return $ Right (V.toList result)
+
+readTimetable :: FilePath -> IO (Either String [Timetable])
+readTimetable filePath = do
   csvData <- BL.readFile filePath
   case decodeByName csvData of
     Left err -> return $ Left err
