@@ -1,5 +1,6 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE RecordWildCards #-}
 
 module Allocation
   ( Allocation(..)
@@ -16,7 +17,7 @@ import Lecturer (Lecturer(..))
 import Module (Module(..))
 import StudentGroup (StudentGroup(..))
 
--- | Represents an allocation of a lecturer to a module and group
+-- | Allocation of a lecturer to a module and group
 --   sourced from the sample allocations CSV
 data Allocation = Allocation
   { allocLecturer :: !String  -- ^ lecturerID foreign key
@@ -34,10 +35,10 @@ instance FromNamedRecord Allocation where
 
 instance ToNamedRecord Allocation where
   toNamedRecord Allocation{..} = namedRecord
-    [ "lecturerID"  .= allocLecturer
-    , "courseID"    .= allocModule
-    , "studentGroup".= allocGroup
-    , "allocHours"  .= allocHours
+    [ "lecturerID"   .= allocLecturer
+    , "courseID"     .= allocModule
+    , "studentGroup" .= allocGroup
+    , "allocHours"   .= allocHours
     ]
 
 -- | Validate allocations for foreign-key existence and over-allocation

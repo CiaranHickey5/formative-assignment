@@ -2,20 +2,21 @@
 
 module Main where
 
-import           Data.Csv                (decodeByName)
-import qualified Data.ByteString.Lazy    as BL
-import           System.Exit             (die)
+import           Data.Csv               (decodeByName, FromNamedRecord)
+import qualified Data.ByteString.Lazy   as BL
+import           Data.Foldable          (toList)
+import           System.Exit            (die)
 
-import           Lecturer                (Lecturer)
-import           Module                  (Module)
-import           Room                    (Room)
-import           StudentGroup            (StudentGroup)
-import           Allocation              (Allocation, validateAllocations)
-import           Timetable               (Timetable)
-import           TimetableValidator      (validateTimetableAll)
-import           Report                  (writeReports)
+import           Lecturer               (Lecturer)
+import           Module                 (Module)
+import           Room                   (Room)
+import           StudentGroup           (StudentGroup)
+import           Allocation             (Allocation)   -- needed for type
+import           Timetable              (Timetable)
+import           TimetableValidator     (validateTimetableAll)
+import           Report                 (writeReports)
 
--- | Read a named CSV and return parsed rows or error
+-- | Read a named CSV file and return parsed records or exit on parse error
 readCSV :: FromNamedRecord a => FilePath -> IO [a]
 readCSV file = do
   bs <- BL.readFile file
@@ -25,16 +26,19 @@ readCSV file = do
 
 main :: IO ()
 main = do
-  lecs   <- readCSV "data/lecturers.csv"
-  mods   <- readCSV "data/modules.csv"
-  rooms  <- readCSV "data/rooms.csv"
-  groups <- readCSV "data/groups.csv"
-  allocs <- readCSV "data/allocations.csv"
-  tts    <- readCSV "data/timetable.csv"
+  lecs    <- readCSV "data/lecturers.csv"
+  courses <- readCSV "data/courses.csv"
+  rooms   <- readCSV "data/rooms.csv"
+  groups  <- readCSV "data/student_groups.csv"
+  -- stub allocations until you have an allocations.csv
+  let allocs = [] :: [Allocation]
 
-  let allocErrs = validateAllocations lecs mods groups allocs
-      ttErrs    = validateTimetableAll rooms groups lecs mods tts
+  tts     <- readCSV "data/timetable.csv"
 
-  writeReports "output" lecs mods rooms groups allocs tts
+  -- run timetable validation (allocations not yet used here)
+  let ttErrs = validateTimetableAll rooms groups lecs courses tts
+
+  -- write out all reports (including empty allocations list)
+  writeReports "output" lecs courses rooms groups allocs tts
 
   putStrLn "Done. Reports and errors written to output/"
