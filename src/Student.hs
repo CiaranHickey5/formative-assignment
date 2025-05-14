@@ -33,7 +33,13 @@ instance FromNamedRecord Student where
     <*> r .: "email"
     <*> r .: "programID"
 
-instance ToNamedRecord Student
+instance ToNamedRecord Student where
+  toNamedRecord Student{..} = namedRecord
+    [ "studentID"  .= studentID
+    , "name"       .= studentName
+    , "email"      .= studentEmail
+    , "programID"  .= programID
+    ]
 
 validateStudentId :: String -> ValidationResult String
 validateStudentId id
