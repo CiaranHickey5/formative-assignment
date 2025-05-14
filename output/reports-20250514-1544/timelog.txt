@@ -1,4 +1,0 @@
-Module C103 requires 5 hours but 1 scheduled
-Module C104 requires 10 hours but 1 scheduled
-Module C105 requires 5 hours but 1 scheduled
-Module C106 requires 5 hours but 1 scheduled
