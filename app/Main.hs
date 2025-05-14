@@ -6,14 +6,11 @@ import StudentGroup
 import Timetable
 import TimetableValidator (ValidationIssue(..), validateTimetableSystem, 
                           checkLecturerOverscheduling, checkRoomDoubleBookings)
-import Data.List (find)
-import Data.List (partition)
+import Data.List (find, partition)
 import Data.Csv (decodeByName, Header)
 import qualified Data.ByteString.Lazy as BL
 import qualified Data.Vector as V (Vector, toList)
 import qualified Data.Csv as Csv (encodeDefaultOrderedByName)
-import qualified Data.ByteString.Lazy as BL
-import qualified Data.Vector as V (Vector, toList)
 
 main :: IO ()
 main = do
@@ -50,6 +47,7 @@ main = do
       putStrLn "\n=== Timetable Rule Check ==="
       putStrLn $ checkLecturerAvailability validLecturers
       
+      -- Load other entities
       putStrLn "\n=== Reading Courses ==="
       courseResult <- readCourses "data/courses.csv"
       case courseResult of
@@ -93,19 +91,39 @@ main = do
         Right entries -> do
           putStrLn "=== All Timetable Entries ==="
           mapM_ print entries
-        putStrLn $ "Total timetable entries: " ++ show (length entries)
+          putStrLn $ "Total timetable entries: " ++ show (length entries)
       
-       putStrLn "\n=== System-Level Validation ==="
-  
-      let lecturerIssues = checkLecturerOverscheduling lecturers timetable
-      if null lecturerIssues
-        then putStrLn "No overscheduled lecturers found."
-        else mapM_ (\issue -> putStrLn $ "  - " ++ issueDescription issue) lecturerIssues
-  
-      let roomIssues = checkRoomDoubleBookings timetable
-      if null roomIssues
-        then putStrLn "No room double bookings found."
-        else mapM_ (\issue -> putStrLn $ "  - " ++ issueDescription issue) roomIssues
+          -- Perform validation
+          putStrLn "\n=== System-Level Validation ==="
+      
+          -- Check lecturer overscheduling
+          let lecturerIssues = checkLecturerOverscheduling validLecturers entries
+          putStrLn "=== Lecturers Scheduled for More Hours Than Available ==="
+          if null lecturerIssues
+            then putStrLn "No overscheduled lecturers found."
+            else mapM_ (\issue -> putStrLn $ "  - " ++ issueDescription issue) lecturerIssues
+      
+          -- Check room double bookings
+          let roomIssues = checkRoomDoubleBookings entries
+          putStrLn "\n=== Room Double Bookings ==="
+          if null roomIssues
+            then putStrLn "No room double bookings found."
+            else mapM_ (\issue -> putStrLn $ "  - " ++ issueDescription issue) roomIssues
+          
+          -- Only proceed with full validation if we have all necessary data
+          case (courseResult, roomResult, groupResult) of
+            (Right courses, Right rooms, Right groups) -> do
+              -- Full system validation
+              let systemIssues = validateTimetableSystem validLecturers courses rooms groups entries
+              putStrLn "\n=== Complete System Validation ==="
+              if null systemIssues
+                then putStrLn "No system-level issues found."
+                else do
+                  putStrLn $ "Found " ++ show (length systemIssues) ++ " system-level issues:"
+                  mapM_ (\issue -> putStrLn $ "  - [" ++ issueType issue ++ "] " ++ 
+                                             issueDescription issue) systemIssues
+            
+            _ -> putStrLn "Cannot perform complete system validation due to data loading errors."
   
 readLecturers :: FilePath -> IO (Either String [Lecturer])
 readLecturers filePath = do
@@ -131,7 +149,7 @@ printInvalidLecturer (lecturer, errors) = do
 
 writeValidLecturers :: [Lecturer] -> IO ()
 writeValidLecturers lecturers = do
-  let csv = encodeDefaultOrderedByName lecturers
+  let csv = Csv.encodeDefaultOrderedByName lecturers
   BL.writeFile "output/valid_lecturers.csv" csv
   putStrLn $ "Wrote " ++ show (length lecturers) ++ " valid lecturers to output/valid_lecturers.csv"
 
@@ -175,81 +193,3 @@ readTimetable filePath = do
   case decodeByName csvData of
     Left err -> return $ Left err
     Right (_, result) -> return $ Right (V.toList result)
-
--- Check if a lecturer is scheduled for more hours than available
-checkLecturerOverscheduling :: [Lecturer] -> [Timetable] -> [(String, Int, Int)]
-checkLecturerOverscheduling lecturers timetable = 
-  let 
-    -- Calculate total hours for each lecturer
-    lecturerHours = map calculateLecturerHours lecturers
-    -- Filter those who are over their available hours
-    overScheduled = filter (\(_, scheduled, available) -> scheduled > available) lecturerHours
-  in 
-    overScheduled
-  where
-    calculateLecturerHours lecturer = 
-      let 
-        id = lecturerID lecturer
-        availableHrs = availableHours lecturer
-        -- Filter timetable entries for this lecturer
-        lecturerEntries = filter (\entry -> lecturerID entry == id) timetable
-        -- Calculate total scheduled hours (simplified - assuming 1 hour per entry)
-        scheduledHours = sum $ map calculateEntryDuration lecturerEntries
-      in 
-        (id, scheduledHours, availableHrs)
-    
-    calculateEntryDuration entry = 
-      let 
-        start = parseTime (startTime entry)
-        end = parseTime (endTime entry)
-      in 
-        end - start
-    
-    parseTime timeStr = 
-      let 
-        hour = read $ take 2 timeStr
-        minute = read $ drop 3 timeStr
-      in 
-        hour + (minute `div` 60)
-
--- Check for room double bookings
-checkRoomDoubleBookings :: [Timetable] -> [(String, String, String)]
-checkRoomDoubleBookings timetable =
-  -- For simplicity, just checking if same room is used on same day at same time
-  let
-    -- Group entries by room, day, and time
-    groupedByRoomAndTime = groupEntries timetable
-    -- Find conflicts
-    conflicts = filter isConflict groupedByRoomAndTime
-  in
-    map formatConflict conflicts
-  where
-    groupEntries entries = 
-      -- Group by room, day, and time
-      -- This is a simplified implementation
-      let
-        sameRoomDayTime e1 e2 = 
-          roomID e1 == roomID e2 && 
-          dayOfWeek e1 == dayOfWeek e2 &&
-          (overlap (startTime e1, endTime e1) (startTime e2, endTime e2))
-        
-        findGroups [] acc = acc
-        findGroups (e:es) acc =
-          let
-            -- Find entries that conflict with e
-            (conflicts, rest) = partition (\x -> sameRoomDayTime e x && e /= x) es
-          in
-            if null conflicts
-              then findGroups es acc
-              else findGroups rest ((e:conflicts):acc)
-      in
-        findGroups entries []
-    
-    isConflict group = length group > 1
-    
-    formatConflict (entry:_) = 
-      (roomID entry, dayOfWeek entry, startTime entry ++ "-" ++ endTime entry)
-    
-    overlap (start1, end1) (start2, end2) =
-      not (end1 <= start2 || end2 <= start1)
-

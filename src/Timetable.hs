@@ -1,4 +1,3 @@
--- Modify Timetable.hs to include more comprehensive validation
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE OverloadedStrings #-}
