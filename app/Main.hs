@@ -4,6 +4,9 @@ import Room
 import Student
 import StudentGroup
 import Timetable
+import TimetableValidator (ValidationIssue(..), validateTimetableSystem, 
+                          checkLecturerOverscheduling, checkRoomDoubleBookings)
+import Data.List (find)
 import Data.List (partition)
 import Data.Csv (decodeByName, Header)
 import qualified Data.ByteString.Lazy as BL
@@ -90,28 +93,19 @@ main = do
         Right entries -> do
           putStrLn "=== All Timetable Entries ==="
           mapM_ print entries
-          putStrLn $ "Total timetable entries: " ++ show (length entries)
+        putStrLn $ "Total timetable entries: " ++ show (length entries)
       
        putStrLn "\n=== System-Level Validation ==="
   
-      -- Check lecturer overscheduling
-      let overscheduled = checkLecturerOverscheduling lecturers timetable
-      putStrLn "=== Lecturers Scheduled for More Hours Than Available ==="
-      if null overscheduled
+      let lecturerIssues = checkLecturerOverscheduling lecturers timetable
+      if null lecturerIssues
         then putStrLn "No overscheduled lecturers found."
-        else mapM_ (\(id, scheduled, available) -> 
-          putStrLn $ "Lecturer " ++ id ++ " is scheduled for " ++ 
-                    show scheduled ++ " hours but is only available for " ++ 
-                    show available ++ " hours.") overscheduled
+        else mapM_ (\issue -> putStrLn $ "  - " ++ issueDescription issue) lecturerIssues
   
-      -- Check room double bookings
-      let roomConflicts = checkRoomDoubleBookings timetable
-      putStrLn "\n=== Room Double Bookings ==="
-      if null roomConflicts
+      let roomIssues = checkRoomDoubleBookings timetable
+      if null roomIssues
         then putStrLn "No room double bookings found."
-        else mapM_ (\(room, day, time) -> 
-          putStrLn $ "Room " ++ room ++ " is double-booked on " ++ 
-                    day ++ " at " ++ time ++ ".") roomConflicts
+        else mapM_ (\issue -> putStrLn $ "  - " ++ issueDescription issue) roomIssues
   
 readLecturers :: FilePath -> IO (Either String [Lecturer])
 readLecturers filePath = do
