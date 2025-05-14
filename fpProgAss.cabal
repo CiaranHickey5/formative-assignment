@@ -25,19 +25,19 @@ source-repository head
 
 library
   exposed-modules:
-    Lecturer
-    Types
-    Course
-    Room
-    Student
-    StudentGroup
-    Timetable
-    TimetableValidator
-    Report
-    Module
-    Programme
-    Allocation
-    ERDiagram
+      Allocation
+      Course
+      ERDiagram
+      Lecturer
+      Module
+      Programme
+      Report
+      Room
+      Student
+      StudentGroup
+      Timetable
+      TimetableValidator
+      Types
   other-modules:
       Paths_fpProgAss
   autogen-modules:
