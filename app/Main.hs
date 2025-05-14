@@ -4,6 +4,7 @@ import Room
 import Student
 import StudentGroup
 import Timetable
+import Data.List (partition)
 import Data.Csv (decodeByName, Header)
 import qualified Data.ByteString.Lazy as BL
 import qualified Data.Vector as V (Vector, toList)
@@ -90,6 +91,27 @@ main = do
           putStrLn "=== All Timetable Entries ==="
           mapM_ print entries
           putStrLn $ "Total timetable entries: " ++ show (length entries)
+      
+       putStrLn "\n=== System-Level Validation ==="
+  
+      -- Check lecturer overscheduling
+      let overscheduled = checkLecturerOverscheduling lecturers timetable
+      putStrLn "=== Lecturers Scheduled for More Hours Than Available ==="
+      if null overscheduled
+        then putStrLn "No overscheduled lecturers found."
+        else mapM_ (\(id, scheduled, available) -> 
+          putStrLn $ "Lecturer " ++ id ++ " is scheduled for " ++ 
+                    show scheduled ++ " hours but is only available for " ++ 
+                    show available ++ " hours.") overscheduled
+  
+      -- Check room double bookings
+      let roomConflicts = checkRoomDoubleBookings timetable
+      putStrLn "\n=== Room Double Bookings ==="
+      if null roomConflicts
+        then putStrLn "No room double bookings found."
+        else mapM_ (\(room, day, time) -> 
+          putStrLn $ "Room " ++ room ++ " is double-booked on " ++ 
+                    day ++ " at " ++ time ++ ".") roomConflicts
   
 readLecturers :: FilePath -> IO (Either String [Lecturer])
 readLecturers filePath = do
@@ -159,3 +181,81 @@ readTimetable filePath = do
   case decodeByName csvData of
     Left err -> return $ Left err
     Right (_, result) -> return $ Right (V.toList result)
+
+-- Check if a lecturer is scheduled for more hours than available
+checkLecturerOverscheduling :: [Lecturer] -> [Timetable] -> [(String, Int, Int)]
+checkLecturerOverscheduling lecturers timetable = 
+  let 
+    -- Calculate total hours for each lecturer
+    lecturerHours = map calculateLecturerHours lecturers
+    -- Filter those who are over their available hours
+    overScheduled = filter (\(_, scheduled, available) -> scheduled > available) lecturerHours
+  in 
+    overScheduled
+  where
+    calculateLecturerHours lecturer = 
+      let 
+        id = lecturerID lecturer
+        availableHrs = availableHours lecturer
+        -- Filter timetable entries for this lecturer
+        lecturerEntries = filter (\entry -> lecturerID entry == id) timetable
+        -- Calculate total scheduled hours (simplified - assuming 1 hour per entry)
+        scheduledHours = sum $ map calculateEntryDuration lecturerEntries
+      in 
+        (id, scheduledHours, availableHrs)
+    
+    calculateEntryDuration entry = 
+      let 
+        start = parseTime (startTime entry)
+        end = parseTime (endTime entry)
+      in 
+        end - start
+    
+    parseTime timeStr = 
+      let 
+        hour = read $ take 2 timeStr
+        minute = read $ drop 3 timeStr
+      in 
+        hour + (minute `div` 60)
+
+-- Check for room double bookings
+checkRoomDoubleBookings :: [Timetable] -> [(String, String, String)]
+checkRoomDoubleBookings timetable =
+  -- For simplicity, just checking if same room is used on same day at same time
+  let
+    -- Group entries by room, day, and time
+    groupedByRoomAndTime = groupEntries timetable
+    -- Find conflicts
+    conflicts = filter isConflict groupedByRoomAndTime
+  in
+    map formatConflict conflicts
+  where
+    groupEntries entries = 
+      -- Group by room, day, and time
+      -- This is a simplified implementation
+      let
+        sameRoomDayTime e1 e2 = 
+          roomID e1 == roomID e2 && 
+          dayOfWeek e1 == dayOfWeek e2 &&
+          (overlap (startTime e1, endTime e1) (startTime e2, endTime e2))
+        
+        findGroups [] acc = acc
+        findGroups (e:es) acc =
+          let
+            -- Find entries that conflict with e
+            (conflicts, rest) = partition (\x -> sameRoomDayTime e x && e /= x) es
+          in
+            if null conflicts
+              then findGroups es acc
+              else findGroups rest ((e:conflicts):acc)
+      in
+        findGroups entries []
+    
+    isConflict group = length group > 1
+    
+    formatConflict (entry:_) = 
+      (roomID entry, dayOfWeek entry, startTime entry ++ "-" ++ endTime entry)
+    
+    overlap (start1, end1) (start2, end2) =
+      not (end1 <= start2 || end2 <= start1)
+
