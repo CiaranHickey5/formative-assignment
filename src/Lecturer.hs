@@ -2,8 +2,6 @@
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE OverloadedStrings #-}
  
-
-
 module Lecturer
   ( Lecturer(..)
   , validateId
@@ -23,10 +21,6 @@ import Data.Char (isDigit, isAlpha)
 import qualified Data.Text as T
 import qualified Data.ByteString as BL
 
-
-
-
-
 data Lecturer = Lecturer
   { lecturerID   :: !String
   , name          :: !String
@@ -44,7 +38,6 @@ instance Csv.FromNamedRecord Lecturer where
     <*> r .: "email"
     <*> r .: "departmentID"
     <*> r .: "availableHours"
-    
 
 instance ToNamedRecord  Lecturer
 

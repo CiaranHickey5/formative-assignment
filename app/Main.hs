@@ -1,8 +1,11 @@
 import Lecturer
+import Course
 import Data.Csv (decodeByName, Header)
 import qualified Data.ByteString.Lazy as BL
 import qualified Data.Vector as V (Vector, toList)
 import qualified Data.Csv as Csv (encodeDefaultOrderedByName)
+import qualified Data.ByteString.Lazy as BL
+import qualified Data.Vector as V (Vector, toList)
 
 main :: IO ()
 main = do
@@ -38,6 +41,15 @@ main = do
       -- Check timetable rule
       putStrLn "\n=== Timetable Rule Check ==="
       putStrLn $ checkLecturerAvailability validLecturers
+      
+      putStrLn "\n=== Reading Courses ==="
+      courseResult <- readCourses "data/courses.csv"
+      case courseResult of
+        Left err  -> putStrLn $ "Error: " ++ err
+        Right courses -> do
+          putStrLn "=== All Courses ==="
+          mapM_ print courses
+          putStrLn $ "Total courses: " ++ show (length courses)
   
 readLecturers :: FilePath -> IO (Either String [Lecturer])
 readLecturers filePath = do
@@ -72,3 +84,10 @@ checkLecturerAvailability lecturers =
   "Checking lecturer availability for " ++ show (length lecturers) ++ " lecturers.\n" ++
   "In a full implementation, this would verify if lecturers are scheduled for\n" ++
   "more hours than their availability allows."
+
+readCourses :: FilePath -> IO (Either String [Course])
+readCourses filePath = do
+  csvData <- BL.readFile filePath
+  case decodeByName csvData of
+    Left err -> return $ Left err
+    Right (_, result) -> return $ Right (V.toList result)
