@@ -6,6 +6,13 @@ import StudentGroup
 import Timetable
 import TimetableValidator (ValidationIssue(..), validateTimetableSystem, 
                           checkLecturerOverscheduling, checkRoomDoubleBookings)
+import Report (generateValidInvalidCSVs, writeEntityCSV, 
+              generateLecturerTimetable, generateGroupTimetable, generateRoomTimetable,
+              writeTimetableReport, TimetableFormat(..))
+import System.Directory (createDirectoryIfMissing)
+import Control.Monad (forM_)
+import Data.List (nub)
+import Data.Char (toLower)
 import Data.List (find, partition)
 import Data.Csv (decodeByName, Header)
 import qualified Data.ByteString.Lazy as BL
@@ -124,6 +131,95 @@ main = do
                                              issueDescription issue) systemIssues
             
             _ -> putStrLn "Cannot perform complete system validation due to data loading errors."
+
+          -- Generate reports if validation completes and data is loaded
+          case (courseResult, roomResult, studentResult, groupResult, timetableResult) of
+            (Right courses, Right rooms, Right students, Right groups, Right entries) -> do
+              putStrLn "\n=== Generating Reports ==="
+          
+          -- Set output directory
+          let outputDir = "output"
+          createDirectoryIfMissing True outputDir
+          
+          -- Generate CSV reports for valid/invalid entities
+          putStrLn "Generating CSV reports for entities..."
+          
+          -- Lecturers
+          generateValidInvalidCSVs outputDir "lecturers" lecturers 
+                                   isValidLecturer 
+                                   (\l -> case validateLecturer l of
+                                           Valid _ -> []
+                                           Invalid errs -> errs)
+          
+          -- Courses
+          generateValidInvalidCSVs outputDir "courses" courses 
+                                   isValidCourse 
+                                   (\c -> case validateCourse c of
+                                           Valid _ -> []
+                                           Invalid errs -> errs)
+          
+          -- Rooms
+          generateValidInvalidCSVs outputDir "rooms" rooms 
+                                   isValidRoom 
+                                   (\r -> case validateRoom r of
+                                           Valid _ -> []
+                                           Invalid errs -> errs)
+          
+          -- Student Groups
+          generateValidInvalidCSVs outputDir "student_groups" groups 
+                                   isValidStudentGroup 
+                                   (\g -> case validateStudentGroup g of
+                                           Valid _ -> []
+                                           Invalid errs -> errs)
+          
+          -- Students
+          generateValidInvalidCSVs outputDir "students" students 
+                                   isValidStudent 
+                                   (\s -> case validateStudent s of
+                                           Valid _ -> []
+                                           Invalid errs -> errs)
+          
+          -- Generate timetable reports
+          putStrLn "Generating timetable reports..."
+          
+          -- Get unique lecturers, groups, and rooms from the timetable
+          let lecturerIds = nub $ map lecturerID entries
+              groupIds = nub $ map studentGroup entries
+              roomIds = nub $ map roomID entries
+          
+          -- Generate lecturer timetables
+          putStrLn $ "Generating timetables for " ++ show (length lecturerIds) ++ " lecturers..."
+          forM_ lecturerIds $ \id -> do
+            let report = generateLecturerTimetable MarkdownFormat id entries courses
+            writeTimetableReport (outputDir ++ "/timetable_lecturer_" ++ id ++ ".md") report
+            
+            -- Also generate HTML version for better presentation
+            let htmlReport = generateLecturerTimetable HTMLFormat id entries courses
+            writeTimetableReport (outputDir ++ "/timetable_lecturer_" ++ id ++ ".html") htmlReport
+          
+          -- Generate group timetables
+          putStrLn $ "Generating timetables for " ++ show (length groupIds) ++ " student groups..."
+          forM_ groupIds $ \id -> do
+            let report = generateGroupTimetable MarkdownFormat id entries courses
+            writeTimetableReport (outputDir ++ "/timetable_group_" ++ id ++ ".md") report
+            
+            -- Also generate HTML version
+            let htmlReport = generateGroupTimetable HTMLFormat id entries courses
+            writeTimetableReport (outputDir ++ "/timetable_group_" ++ id ++ ".html") htmlReport
+          
+          -- Generate room timetables
+          putStrLn $ "Generating timetables for " ++ show (length roomIds) ++ " rooms..."
+          forM_ roomIds $ \id -> do
+            let report = generateRoomTimetable MarkdownFormat id entries courses
+            writeTimetableReport (outputDir ++ "/timetable_room_" ++ id ++ ".md") report
+            
+            -- Also generate HTML version
+            let htmlReport = generateRoomTimetable HTMLFormat id entries courses
+            writeTimetableReport (outputDir ++ "/timetable_room_" ++ id ++ ".html") htmlReport
+          
+          putStrLn "Report generation complete!"
+          
+        _ -> putStrLn "Cannot generate reports due to data loading errors."
   
 readLecturers :: FilePath -> IO (Either String [Lecturer])
 readLecturers filePath = do
