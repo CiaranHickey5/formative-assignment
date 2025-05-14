@@ -1,5 +1,3 @@
-import Data.List (nub, (\\), intercalate)
-
 module ERDiagram
   ( Entity(..)
   , Attribute(..)
@@ -7,6 +5,8 @@ module ERDiagram
   , validateERDiagram
   , checkDiagramCompleteness
   ) where
+
+import Data.List (nub, (\\), intercalate)
 
 data Entity = Entity 
   { entityName :: String

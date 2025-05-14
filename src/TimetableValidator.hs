@@ -16,7 +16,7 @@ import Timetable
 import Types (ValidationResult(..))
 import Data.List (groupBy, sortOn, nubBy)
 import Data.Function (on)
-import Data.Maybe (maybeToList)
+import Data.List (find)
 
 data ValidationIssue = ValidationIssue
   { issueType :: String

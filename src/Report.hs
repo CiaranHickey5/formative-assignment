@@ -21,6 +21,8 @@ import StudentGroup
 import Timetable
 import Module
 import Types (ValidationResult(..))
+import Data.List (find)
+import Data.Char (toLower)
 
 import Data.List (groupBy, sortOn, intercalate)
 import Data.Function (on)

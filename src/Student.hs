@@ -17,6 +17,7 @@ import GHC.Generics (Generic)
 import Data.Csv (FromNamedRecord(..), ToNamedRecord, (.:))
 import qualified Data.Csv as Csv
 import Data.Char (isDigit)
+import Data.List (isPrefixOf, isSuffixOf)
 
 data Student = Student
   { studentID  :: !String

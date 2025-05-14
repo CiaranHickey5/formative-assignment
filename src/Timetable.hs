@@ -19,6 +19,7 @@ import Data.Csv (FromNamedRecord(..), ToNamedRecord, (.:))
 import qualified Data.Csv as Csv
 import Data.List (groupBy, sortOn)
 import Data.Function (on)
+import Data.List (find)
 
 data Timetable = Timetable
   { timeSlot     :: !String
