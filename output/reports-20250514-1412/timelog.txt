@@ -1,0 +1,3 @@
+Module C101 requires 5 hours but 1 scheduled
+Module C102 requires 5 hours but 1 scheduled
+Module C201 requires -1 hours but 1 scheduled

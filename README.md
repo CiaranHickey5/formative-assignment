@@ -1,5 +1,8 @@
-[![Review Assignment Due Date](https://classroom.github.com/assets/deadline-readme-button-22041afd0340ce965d47ae6ef1cefeee28c7c493a6346c4f15d667ab976d596c.svg)](https://classroom.github.com/a/T99Cuzz7)
-[![Open in Visual Studio Code](https://classroom.github.com/assets/open-in-vscode-2e0aaae1b6195c2367325f4f02e2d04e9abb55f0b24a779b69b11b9e10269abc.svg)](https://classroom.github.com/online_ide?assignment_repo_id=18874048&assignment_repo_type=AssignmentRepo)
-# fpProgAss
+# Programming Assignment - Functional Programming
 
-This is starter code for the Functional Programming Assignment for Ciaran Hickey. 
+## Student Information
+
+| Field          | Value         |
+| -------------- | ------------- |
+| Name           | Ciaran Hickey |
+| Student Number | 20088959      |

@@ -1,5 +1,5 @@
-{-# LANGUAGE DeriveGeneric #-}
-{-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE DeriveGeneric     #-}
+{-# LANGUAGE RecordWildCards   #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Course
@@ -12,72 +12,100 @@ module Course
   , isValidCourse
   ) where
 
-import Types (ValidationResult(..))
-import GHC.Generics (Generic)
-import Data.Csv (FromNamedRecord(..), ToNamedRecord, (.:))
-import qualified Data.Csv as Csv
-import Data.Char (isAlphaNum)
+import           GHC.Generics              (Generic)
+import           Data.Char                 (isAlphaNum)
+import           Data.Csv                  ( FromNamedRecord(..)
+                                           , ToNamedRecord(..)
+                                           , DefaultOrdered(..)
+                                           , (.=)
+                                           , (.:)
+                                           , namedRecord
+                                           , header
+                                           )
+import           Types                     (ValidationResult(..))
+
+--------------------------------------------------------------------------------
+-- * Course type
+--------------------------------------------------------------------------------
 
 data Course = Course
-  { courseID     :: !String
-  , courseName   :: !String
-  , credits      :: !Int
-  , departmentID :: !String
+  { courseID     :: !String    -- ^ e.g. "C103"
+  , courseName   :: !String    -- ^ e.g. "Functional Programming"
+  , credits      :: !Int       -- ^ number of credits / contact hours
+  , departmentID :: !String    -- ^ e.g. "CompSci"
   } deriving (Show, Generic)
 
 instance FromNamedRecord Course where
   parseNamedRecord r = Course
     <$> r .: "courseID"
     <*> r .: "name"
-    <*> r .: "credits" 
+    <*> r .: "credits"
     <*> r .: "departmentID"
 
-instance ToNamedRecord Course
+instance ToNamedRecord Course where
+  toNamedRecord Course{..} =
+    namedRecord
+      [ "courseID"     .= courseID
+      , "name"         .= courseName
+      , "credits"      .= credits
+      , "departmentID" .= departmentID
+      ]
+
+instance DefaultOrdered Course where
+  -- explicitly spell out the header row
+  headerOrder _ = header ["courseID","name","credits","departmentID"]
+
+--------------------------------------------------------------------------------
+-- * Validation
+--------------------------------------------------------------------------------
 
 validateCourseId :: String -> ValidationResult String
-validateCourseId id
-  | null id                        = Invalid ["Course ID is empty"]
-  | length id < 3                  = Invalid ["Course ID must be at least 3 characters"]
-  | not (head id == 'C')           = Invalid ["Course ID must start with 'C'"]
-  | not (all isAlphaNum id)        = Invalid ["Course ID must contain only alphanumeric characters"]
-  | otherwise                      = Valid id
+validateCourseId cid
+  | null cid                 = Invalid ["Course ID is empty"]
+  | length cid < 3           = Invalid ["Course ID must be at least 3 characters"]
+  | head cid /= 'C'          = Invalid ["Course ID must start with 'C'"]
+  | not (all isAlphaNum cid) = Invalid ["Course ID must be alphanumeric"]
+  | otherwise                = Valid cid
 
 validateCourseName :: String -> ValidationResult String
-validateCourseName name
-  | null name                      = Invalid ["Course name is empty"]
-  | length name > 50               = Invalid ["Course name must be 50 characters or less"]
-  | otherwise                      = Valid name
+validateCourseName nm
+  | null nm           = Invalid ["Course name is empty"]
+  | length nm > 50    = Invalid ["Course name must be ≤ 50 characters"]
+  | otherwise         = Valid nm
 
 validateCredits :: Int -> ValidationResult Int
-validateCredits cred
-  | cred < 0                       = Invalid ["Credits cannot be negative"]
-  | cred > 60                      = Invalid ["Credits cannot exceed 60"]
-  | otherwise                      = Valid cred
+validateCredits c
+  | c < 0     = Invalid ["Credits cannot be negative"]
+  | c > 60    = Invalid ["Credits cannot exceed 60"]
+  | otherwise = Valid c
 
 validateCourseDepartmentId :: String -> ValidationResult String
-validateCourseDepartmentId departmentId
-  | null departmentId              = Invalid ["Department ID is empty"]
-  | otherwise                      = Valid departmentId
+validateCourseDepartmentId did
+  | null did  = Invalid ["Department ID is empty"]
+  | otherwise = Valid did
 
 validateCourse :: Course -> ValidationResult Course
 validateCourse course =
-  case (validateCourseId (courseID course),
-        validateCourseName (courseName course),
-        validateCredits (credits course),
-        validateCourseDepartmentId (departmentID course)) of
+  case ( validateCourseId     (courseID course)
+       , validateCourseName   (courseName course)
+       , validateCredits      (credits course)
+       , validateCourseDepartmentId (departmentID course)
+       ) of
     (Valid _, Valid _, Valid _, Valid _) -> Valid course
-    (idResult, nameResult, creditsResult, deptResult) ->
-      let errors = concat [getErrors idResult "ID",
-                          getErrors nameResult "Name",
-                          getErrors creditsResult "Credits",
-                          getErrors deptResult "Department"]
-      in Invalid errors
+    (idR, nmR, crR, dpR) ->
+      let errs = concat
+            [ prefix "ID" idR
+            , prefix "Name" nmR
+            , prefix "Credits" crR
+            , prefix "Department" dpR
+            ]
+      in Invalid errs
   where
-    getErrors (Invalid errs) prefix = map (\err -> prefix ++ ": " ++ err) errs
-    getErrors (Valid _) _ = []
+    prefix :: String -> ValidationResult a -> [String]
+    prefix p (Invalid es) = map (\e -> p ++ ": " ++ e) es
+    prefix _ (Valid _)    = []
 
 isValidCourse :: Course -> Bool
-isValidCourse course =
-  case validateCourse course of
-    Valid _ -> True
-    Invalid _ -> False
+isValidCourse c = case validateCourse c of
+  Valid _   -> True
+  Invalid _ -> False

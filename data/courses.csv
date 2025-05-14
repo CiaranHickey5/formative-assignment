@@ -2,3 +2,6 @@ courseID,name,credits,departmentID
 C101,Physics,5,Science
 C102,Web App Development,5,CompSci
 C103,Functional Programming,5,CompMaths
+C104,Data Structures and Algorithms,10,CompSci
+C105,Relational Databases,5,CompSci
+C106,Discrete Mathematics,5,Maths
